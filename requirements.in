@@ -1,0 +1,14 @@
+autopep8
+yamllint
+pip-tools
+amzqr
+flask
+bootstrap-flask==2.0.1
+Flask-WTF
+webargs
+smart_getenv
+marshmallow
+requests
+opencv-python
+numpy
+flask_sqlalchemy

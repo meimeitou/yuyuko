@@ -2,7 +2,7 @@
 # from app import models
 from flask import Flask, jsonify
 from flask_bootstrap import Bootstrap5
-from app.model import db
+from app.model import db,Message
 from app.api import api
 from app.home.home import app as home
 from werkzeug.exceptions import HTTPException, default_exceptions
@@ -30,14 +30,6 @@ def make_json_error(err):
 
 for code in default_exceptions.keys():
     app.register_error_handler(code, make_json_error)
-
-class Message(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.Text, nullable=False)
-    author = db.Column(db.String(100), nullable=False)
-    category = db.Column(db.String(100), nullable=False)
-    draft = db.Column(db.Boolean, default=False, nullable=False)
-    create_time = db.Column(db.Integer, nullable=False, unique=True)
 
 @app.before_first_request
 def before_first_request_func():

@@ -1,3 +1,4 @@
+from time import sleep
 from app import app, cli
 import webbrowser
 from threading import Timer

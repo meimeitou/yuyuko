@@ -26,6 +26,8 @@ make dev
 https://github.com/greyli/bootstrap-flask
 https://bootstrap-flask.readthedocs.io/en/stable/
 
+bootstrap5: `https://getbootstrap.com/docs/5.0/getting-started/introduction/`
+
 ## problems
 
 - 无法打开“chromedriver”，因为无法验证开发者

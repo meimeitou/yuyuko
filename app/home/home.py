@@ -89,6 +89,9 @@ class ContactForm(FlaskForm):
 def index():
     return render_template('index.html')
 
+@app.route('/example')
+def example():
+    return render_template('example/index.html')
 
 @app.route('/form', methods=['GET', 'POST'])
 def test_form():

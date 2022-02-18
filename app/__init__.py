@@ -12,7 +12,7 @@ from flask_wtf import  CSRFProtect
 
 logging.basicConfig(level=logging.INFO)
 logging.info(Config.__dict__)
-app = Flask(__name__, static_folder="app/static", template_folder='app/templates')
+app = Flask(__name__)
 bootstrap = Bootstrap5(app)
 db.init_app(app)
 csrf = CSRFProtect(app)

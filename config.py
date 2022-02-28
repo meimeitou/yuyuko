@@ -23,6 +23,7 @@ class Config(object):
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    BOOTSTRAP_BOOTSWATCH_THEME = 'quartz'
 
     BOOTSTRAP_BTN_STYLE = 'primary'
     BOOTSTRAP_BTN_SIZE = 'sm'

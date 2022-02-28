@@ -1,18 +1,8 @@
 # yuyuko
 
-- 二维码读取
-- 二维码生成
-- 二维码传数据
+自制工具集
 
 ## develop
-
-auto open browser:
-```shell
-# mac
-brew install --cask chromedriver
-# ubuntu
-sudo apt install chromium-chromedriver
-```
 
 ```shell
 # enter env
@@ -23,16 +13,26 @@ make dev
 
 ## ref
 
-https://github.com/greyli/bootstrap-flask
-https://bootstrap-flask.readthedocs.io/en/stable/
+- web：
+vue3 + quasar
 
-bootstrap5: `https://getbootstrap.com/docs/5.0/getting-started/introduction/`
+- marshmallow:
+https://marshmallow.readthedocs.io/en/stable/index.html
+https://marshmallow.readthedocs.io/en/stable/examples.html
+
+- webargs
+https://webargs.readthedocs.io/en/latest/quickstart.html
+
 
 ## problems
 
-- 无法打开“chromedriver”，因为无法验证开发者
+## dev list
 
-```shell
-cd /usr/local/bin/
-xattr -d com.apple.quarantine chromedriver
-```
+- 二维码生成，解码
+- jwt decode
+- CURL页面请求
+- 抓取特定页面资源
+- 网页终端，连接服务器
+- 在线文件管理工具。在浏览器上管理 FTP、SFTP、Git、S3、MySQL、Dropbox 等服务中的文件和数据，支持编辑文件、图片管理、视频转码、Office 文档、全文搜索等功能 https://github.com/mickael-kerjean/filestash
+- 股票
+- 小工具 https://github.com/Python-World/python-mini-projects

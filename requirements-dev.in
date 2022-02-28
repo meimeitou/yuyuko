@@ -1,3 +1,6 @@
 -r requirements.in
+pip-tools
+autopep8
+yamllint
 notebook
 jupyterlab

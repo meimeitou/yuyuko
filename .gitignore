@@ -6,5 +6,4 @@ passwords.txt
 .ipynb_checkpoints
 .ropeproject
 *.pyc
-test/
 tmp

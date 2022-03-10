@@ -16,6 +16,29 @@ const routes: Array<RouteRecordRaw> = [
     component: () =>
       import(/* webpackChunkName: "about" */ "../views/About.vue"),
   },
+  {
+    path: "/terminal",
+    name: "Terminal",
+    component: () =>
+      import(/* webpackChunkName: "terminal" */ "../views/Terminal.vue"),
+  },
+  {
+    path: "/curl",
+    name: "Curl",
+    component: () => import(/* webpackChunkName: "curl" */ "../views/Curl.vue"),
+  },
+  {
+    path: "/spider",
+    name: "Spider",
+    component: () =>
+      import(/* webpackChunkName: "spider" */ "../views/Spider.vue"),
+  },
+  {
+    path: "/tools",
+    name: "Tools",
+    component: () =>
+      import(/* webpackChunkName: "tools" */ "../views/Tools.vue"),
+  },
 ];
 
 const router = createRouter({

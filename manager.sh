@@ -34,7 +34,7 @@ venv_install() {
   VENV_CHECKSUM="$(cat 2>/dev/null "${VENV_CHECKSUM_FILE}" || true)"
   if [ "$(venv_checksum)" != "${VENV_CHECKSUM}" ]; then
       "${VENV_DIR}/bin/pip-compile" --no-emit-index-url "$1.in"
-       "${VENV_DIR}/bin/pip" install -r "$1.txt"
+      "${VENV_DIR}/bin/pip" install -r "$1.txt"
       "${VENV_DIR}/bin/pip-sync" "$1.txt"
       venv_checksum > "${VENV_CHECKSUM_FILE}"
   fi

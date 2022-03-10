@@ -1,39 +1,40 @@
 const menuList = [
   {
     icon: "inbox",
-    label: "主页",
+    label: "Home",
     separator: true,
+    to: "/",
   },
   {
-    icon: "send",
-    label: "Outbox",
+    icon: "terminal",
+    label: "Terminal",
     separator: false,
+    to: "/terminal",
   },
   {
-    icon: "delete",
-    label: "Trash",
+    icon: "terminal",
+    label: "Curl",
     separator: false,
+    to: "/curl",
   },
   {
-    icon: "error",
-    label: "Spam",
+    icon: "terminal",
+    label: "Spider",
+    separator: false,
+    to: "/spider",
+  },
+  {
+    icon: "terminal",
+    label: "Tools",
     separator: true,
-  },
-  {
-    icon: "settings",
-    label: "Settings",
-    separator: false,
-  },
-  {
-    icon: "feedback",
-    label: "Send Feedback",
-    separator: false,
+    to: "/tools",
   },
   {
     icon: "help",
     iconColor: "primary",
-    label: "Help",
+    label: "About",
     separator: false,
+    to: "/about",
   },
 ];
 

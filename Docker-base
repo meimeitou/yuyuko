@@ -1,0 +1,20 @@
+FROM python:3.8
+
+WORKDIR /workspace
+ENV TIME_ZONE=Asia/Shanghai
+ARG REPOSITORIES_SEC=security.debian.org/mirrors.aliyun.com
+ARG REPOSITORIES=deb.debian.org/mirrors.aliyun.com
+
+RUN sed -i "s/${REPOSITORIES}/g" /etc/apt/sources.list && \
+    sed -i "s/${REPOSITORIES_SEC}/g" /etc/apt/sources.list && \
+    sed -i  "s/CipherString = DEFAULT@SECLEVEL=2/CipherString = DEFAULT@SECLEVEL=1/g" /etc/ssl/openssl.cnf && \
+    apt-get update -y &&\
+    apt-get install tzdata -y && \
+    ln -sf /usr/share/zoneinfo/${TIME_ZONE}  /etc/localtime && \
+    echo "${TIME_ZONE}" > /etc/timezone && \
+    apt-get install ffmpeg libsm6 libxext6 -y
+
+COPY ./requirements.in /workspace/requirements.in
+COPY ./requirements-dev.in /workspace/requirements-dev.in
+COPY ./manager.sh /workspace/manager.sh
+RUN ./manager.sh pro-venv && rm -rf /root/.cache/*

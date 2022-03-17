@@ -1,102 +1,136 @@
-from flask_socketio import SocketIO, Namespace
-from flask import session
+from flask_socketio import SocketIO, Namespace, disconnect,ConnectionRefusedError
+from flask import request
 import logging
-import pty
-import os
-import subprocess
-import select
-import termios
-import struct
-import fcntl
-import shlex
-import logging
+from threading import Lock
+from app.socket.ssh import SSHClient
+from app.socket.worker import clients, Worker
+import weakref
+import paramiko
 
-
+thread = None
+thread_lock = Lock()
 socketio = SocketIO()
-async_mode = None
+async_mode = "gevent"
+# sshClient = None
+BUF_SIZE = 32 * 1024
+MAX_WORKERS = 10
 
-session_fd = None
-session_child = None
-
-def init_terminal(app):
+def init_term(app):
     global socketio
-    socketio = SocketIO(app, cors_allowed_origins='*',
-                        engineio_logger=True, async_mode=async_mode,
+    socketio = SocketIO(app, cors_allowed_origins='*',ping_timeout=5, ping_interval=5,
+                        engineio_logger=False, async_mode=async_mode,async_handlers=True,
                         path="socket/terminal.io")
     socketio.on_namespace(MyNamespace('/pty'))
 
 
-def set_winsize(fd, row, col, xpix=0, ypix=0):
-    logging.debug("setting window size with termios")
-    winsize = struct.pack("HHHH", row, col, xpix, ypix)
-    fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
-
-
-def read_and_forward_pty_output():
-    max_read_bytes = 1024 * 20
+def recvThread(worker=None):
+    # global sshClient
     while True:
         socketio.sleep(0.01)
-        if session_fd:
-            timeout_sec = 0
-            (data_ready, _, _) = select.select(
-                [session_fd], [], [], timeout_sec)
-            if data_ready:
-                output = os.read(session_fd, max_read_bytes).decode()
+        if worker:
+            while worker.sshClient.chan.recv_ready():
+                info = worker.sshClient.chan.recv(BUF_SIZE).decode('utf-8')
                 socketio.emit(
-                    "pty-output", {"output": output}, namespace="/pty")
-
-
+                    "pty-output", {"output": info},
+                    namespace="/pty",
+                    room=worker.sid)
 class MyNamespace(Namespace):
-    # @socketio.on("pty-input", namespace="/pty")
+    def on_disconnect(self):
+        print('Client disconnected', request.sid)
+        worker = self._get_worker()
+        if worker:
+            worker().close()
+    # 断开连接
+    def on_disconnect_request(self):
+        logging.info(f"on_disconnect_request request sid: {request.sid}")
+        # global sshClient
+        socketio.emit("pty-output", {"output": "exit\r\n"}, namespace="/pty",room=request.sid)
+        disconnect()
+        worker = self._get_worker()
+        if worker:
+            worker().close()
+        # sshClient = None
+
+    # web终端输入
     def on_ptyinput(self, data):
-        """write to the child pty. The pty sees this as if you are typing in a real
-        terminal.
-        """
-        if session_fd:
-            logging.debug("received input from browser: %s" % data["input"])
-            os.write(session_fd, data["input"].encode())
+        # global sshClient
+        worker = self._get_worker()
+        logging.info(f"on_ptyinput request sid: {request.sid}")
+        if worker:
+            # logging.info("received input from browser: %s" % repr(data["input"].encode()))
+            worker().sshClient.send(data["input"].encode())
+            if data["input"].encode() == b'\x04':
+                socketio.emit(
+                    "pty-output", {"output": "exit\r\n"},
+                    namespace="/pty", room=request.sid)
+                disconnect()
+                worker().close()
 
-    # @socketio.on("resize", namespace="/pty")
-
+    # 终端调整大小
     def on_resize(self, data):
-        if session_fd:
+        # global sshClient
+        worker = self._get_worker()
+        if worker:
             logging.debug(f"Resizing window to {data['rows']}x{data['cols']}")
-            set_winsize(session_fd, data["rows"], data["cols"])
+            worker().sshClient.resize_window(data["cols"], data["rows"])
 
-    # @socketio.on("connect", namespace="/pty")
-
-    def on_connect(self, data):
-        global session_child
-        global session_fd
-        """new client connected"""
-        logging.info("new client connected")
-        
-        if "child_pid" in session:
+    # 连接ssh
+    def on_ssh(self, data):
+        logging.info(f"connecting ssh...,{data}")
+        ip = self._get_remote_ip()
+        sid = request.sid
+        if self._get_worker() is not None:
+            logging.info("already connected...")
             return
-
-        # create child process attached to a pty we can read from and write to
-        (child_pid, fd) = pty.fork()
-        if child_pid == 0:
-            # 子进程
-            # this is the child process fork.
-            # anything printed here will show up in the pty, including the output
-            # of this subprocess
-            subprocess.run("bash")
+        
+        if ip in clients:
+            if len(clients.get(ip))>=MAX_WORKERS:
+                logging.info("client max connection reached...")
+                socketio.emit(
+                    "pty-output", {"output": "client max connection reached..\r\n"},
+                    namespace="/pty",room=sid)
+                disconnect()
+                return
+        logging.info("new client connected")
+        try:
+            
+            sshClient = SSHClient(host=data["host"], port=data["port"],
+                                user=data["user"], password=data["password"])
+            sshClient.resize_window(data["cols"], data["rows"])
+            worker = Worker(ip, sid, sshClient)
+        except Exception as e:
+            socketio.emit(
+                    "pty-output", {"output": "连接失败...\r\n"},
+                    namespace="/pty",room=sid)
+            socketio.emit(
+                    "pty-output", {"output": f"{e}\r\n"},
+                    namespace="/pty",room=sid)
+            disconnect()
+            return
+        if ip in clients:
+            clients[ip][sid] = worker
         else:
-            # 父进程
-            # this is the parent process fork.
-            # store child fd and pid
-            session_fd = fd
-            session_child = child_pid
-            set_winsize(fd, 50, 50)
-            cmd = shlex.quote("bash") 
-            # logging/print statements must go after this because... I have no idea why
-            # but if they come before the background task never starts
-            socketio.start_background_task(target=read_and_forward_pty_output)
+            clients[ip] = {}
+            clients[ip][sid] = worker
+        global thread
+        with thread_lock:
+            if thread is None:
+                socketio.start_background_task(target=recvThread, worker=worker)
 
-            logging.info(f"child pid is {child_pid}")
-            logging.info(
-                f"starting background task with command `{cmd}` to continously read "
-                "and forward pty output to client"
-            )
-            logging.info("task started")
+    # 连接
+    def on_connect(self):
+        logging.info(f'client ip: {self._get_remote_ip()} sid: {request.sid}, connected...')
+    # create or old
+    def _get_worker(self):
+        ip = self._get_remote_ip()
+        sid = request.sid
+        if ip in clients:
+            if sid in clients.get(ip):
+                return weakref.ref(clients.get(ip).get(sid))
+        return None
+
+    def _get_remote_ip(self):
+        if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
+            return request.environ['REMOTE_ADDR']
+        else:
+            request.environ['HTTP_X_FORWARDED_FOR']

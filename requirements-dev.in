@@ -1,5 +1,4 @@
 -r requirements.in
-pip-tools>=6.5.1 # lower has bug
 autopep8
 yamllint
 notebook

@@ -1,0 +1,6 @@
+.venv
+.vscode
+static
+__pychache__
+test
+.env

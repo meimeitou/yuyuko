@@ -17,10 +17,9 @@ const routes: Array<RouteRecordRaw> = [
       import(/* webpackChunkName: "about" */ "../views/About.vue"),
   },
   {
-    path: "/terminal",
-    name: "Terminal",
-    component: () =>
-      import(/* webpackChunkName: "terminal" */ "../views/Terminal.vue"),
+    path: "/ssh",
+    name: "SSH",
+    component: () => import(/* webpackChunkName: "ssh" */ "../views/SSH.vue"),
   },
   {
     path: "/curl",

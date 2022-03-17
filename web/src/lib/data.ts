@@ -7,9 +7,9 @@ const menuList = [
   },
   {
     icon: "terminal",
-    label: "Terminal",
+    label: "SSH",
     separator: false,
-    to: "/terminal",
+    to: "/ssh",
   },
   {
     icon: "terminal",

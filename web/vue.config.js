@@ -14,6 +14,12 @@ module.exports = {
           pathRewrite: { "^/api": "/api" },
         },
       },
+      "^/socket": {
+        target: "http://localhost:5588",
+        pathRewrite: {
+          pathRewrite: { "^/socket": "/socket" },
+        },
+      },
     },
     https: false,
     disableHostCheck: true,

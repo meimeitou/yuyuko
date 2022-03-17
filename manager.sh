@@ -21,7 +21,7 @@ venv_base() {
 }
 
 venv_checksum() {
-  files=("requirements.in" "requirements.txt" "requirements-dev.in")
+  files=("requirements.in" "requirements-dev.in")
   if [ -n "$(command -v shasum)" ]; then
     (cd "${ROOT_DIR}" && shasum -a 256 "${files[@]}")
   else

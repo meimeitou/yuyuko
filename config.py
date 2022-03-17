@@ -4,14 +4,15 @@ from pathlib import Path
 # from dotenv import load_dotenv
 from smart_getenv import getenv
 from distutils.util import strtobool
-
+from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 # load_dotenv(os.path.join(basedir, '.env'))
-
+load_dotenv(os.path.join(basedir, '.env'))
+load_dotenv(os.path.join(basedir, '/etc/yuyuko/.env'))
 
 class Config(object):
-    SECRET_KEY = getenv('SECRET_KEY') or '004f2af45d3a4e161a7dd2d17fdae47f12s'
+    SECRET_KEY = getenv('SECRET_KEY') or '004f2af45d3a4e161a7ddDLLS;7:$#2d17fdae47f12s'
     JSON_SORT_KEYS = False
     LOG_TO_STDOUT = getenv('LOG_TO_STDOUT')
 

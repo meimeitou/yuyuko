@@ -3,10 +3,10 @@ import time
 import _thread
 
 
-hostname = 'w-iscdns1.ops.shbt.qihoo.net'
-port = 6000
-username = 'yinqiwei'
-password = 'kexiaocui'
+hostname = 'localhost'
+port = 22
+username = ''
+password = ''
 timeout = 10
 
 def recvThread():  # 开启一个多线程负责读取返回信息
@@ -26,9 +26,13 @@ if __name__ == "__main__":
     _thread.start_new_thread(recvThread, ())
 
     while True:
+        if chan.closed:
+            exit(0)
         time.sleep(0.5)
         command = input()
         if command == 'quitshell':
             print('Bye Bye!')
-            exit(0)
+            chan.send(chr(3))
+            chan.close()
+            break
         chan.send(command+'\n')

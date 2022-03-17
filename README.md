@@ -1,6 +1,6 @@
 # yuyuko
 
-自制工具集
+开发者工具集
 
 ## develop
 

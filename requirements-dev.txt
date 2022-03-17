@@ -62,8 +62,18 @@ flask-socketio==5.1.1
     # via -r requirements.in
 flask-sqlalchemy==2.5.1
     # via -r requirements.in
+gevent==21.12.0
+    # via
+    #   -r requirements.in
+    #   gevent-websocket
+gevent-websocket==0.10.1
+    # via -r requirements.in
 greenlet==1.1.2
-    # via sqlalchemy
+    # via
+    #   gevent
+    #   sqlalchemy
+gunicorn==20.1.0
+    # via -r requirements.in
 idna==3.3
     # via
     #   anyio
@@ -192,7 +202,7 @@ pillow==8.4.0
     #   amzqr
     #   imageio
 pip-tools==6.5.1
-    # via -r requirements-dev.in
+    # via -r requirements.in
 prometheus-client==0.12.0
     # via
     #   jupyter-server
@@ -207,6 +217,8 @@ pycodestyle==2.8.0
     # via autopep8
 pycparser==2.21
     # via cffi
+pycryptodome==3.14.1
+    # via -r requirements.in
 pygments==2.10.0
     # via
     #   ipython
@@ -222,6 +234,8 @@ pyrsistent==0.18.0
     # via jsonschema
 python-dateutil==2.8.2
     # via jupyter-client
+python-dotenv==0.19.2
+    # via -r requirements.in
 python-engineio==4.3.1
     # via python-socketio
 python-socketio==5.5.2
@@ -302,6 +316,10 @@ yamllint==1.26.3
     # via -r requirements-dev.in
 zipp==3.7.0
     # via importlib-resources
+zope-event==4.5.0
+    # via gevent
+zope-interface==5.4.0
+    # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

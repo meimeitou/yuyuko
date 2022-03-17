@@ -1,5 +1,5 @@
 <template>
-  {{ status }}
+  <q-badge :color="connectColor"> 连接状态: {{ status }} </q-badge>
   <div
     style="width: 100%; height: calc(100% - 50px)"
     id="terminal"
@@ -19,9 +19,42 @@ import { WebLinksAddon } from "xterm-addon-web-links";
 
 export default defineComponent({
   Name: "Terminal",
+  props: {
+    host: {
+      type: String,
+      required: true,
+    },
+    port: {
+      type: Number,
+      default: 22,
+      required: true,
+    },
+    user: {
+      type: String,
+      required: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    socketURI: {
+      type: String,
+      default:
+        window.location.protocol +
+        "//" +
+        window.location.hostname +
+        ":" +
+        window.location.port +
+        "/pty",
+    },
+    socketPath: {
+      type: String,
+      default: "/socket/terminal.io",
+    },
+  },
   setup() {
-    var rows = 100;
-    var cols = 40;
+    var rows = 45;
+    var cols = 50;
     const term = new Terminal({
       rendererType: "canvas", // 渲染类型
       rows: rows, // 行数
@@ -43,10 +76,20 @@ export default defineComponent({
     term.loadAddon(new SearchAddon());
     term.loadAddon(new WebLinksAddon());
     // init socket
-    const options = { path: "/socket/terminal.io" }; //Options object to pass into SocketIO
+    const options = {
+      path: "/socket/terminal.io",
+    }; //Options object to pass into SocketIO
     //     http[s]://<domain>:<port>[/<namespace>]
-    const socket = io("http://10.18.30.212:5588/pty", options); //options object is Optional
-
+    const uri =
+      window.location.protocol +
+      "//" +
+      window.location.hostname +
+      ":" +
+      window.location.port +
+      "/pty";
+    //     http[s]://<domain>:<port>[/<namespace>]
+    // const socket = io("http://10.18.30.212:5588/pty", options); //options object is Optional
+    const socket = io(uri, options);
     return {
       fit,
       socket,
@@ -54,6 +97,7 @@ export default defineComponent({
       term, // 保存terminal实例
       rows,
       cols,
+      connectColor: ref("green"),
     };
   },
   created() {
@@ -67,38 +111,68 @@ export default defineComponent({
     this.term.dispose();
   },
   mounted() {
+    this.socket.on("connect_failed", () => {
+      this.term.writeln("sd");
+    });
+    this.socket.on("error", () => {
+      this.term.writeln("sd");
+    });
+    this.initTerminal();
     // 连接后端
     this.socket.on("connect", () => {
-      this.initTerminal();
-      this.fitToscreen();
+      this.socket.emit("ssh", {
+        host: this.host,
+        port: this.port,
+        user: this.user,
+        password: this.password,
+        rows: this.term.rows,
+        cols: this.term.cols,
+      });
       this.status = "connected";
+      this.connectColor = "green";
     });
     // 绑定socket方法
     // 后端输出到终端
     this.socket.on("pty-output", (data) => {
-      console.log("new output received from server:", data.output);
+      // console.log("new output received from server:", data.output);
       this.term.write(data.output);
     });
     // 断开连接
     this.socket.on("disconnect", () => {
-      this.status = "disconnect";
+      this.socket.close();
+      this.connectColor = "red";
+      this.status = "disconnected";
     });
+    // this.fitToscreen();
+    // console.log(this.term.rows, this.term.cols);
   },
   methods: {
     initTerminal() {
       const modalRoot = document.getElementById("terminal") as HTMLElement;
       this.term.open(modalRoot);
       // this.fit.fit();
-      this.term.resize(this.rows, this.cols);
+      this.term.resize(this.cols, this.rows);
       this.fit.fit();
       this.term.focus();
-      this.term.writeln("Welcome to Yuyuko Terminal!");
+      this.term.writeln("\x1b[1;31m" + "Welcome to Yuyuko Web Terminal! ");
+      this.term.writeln(
+        "\x1b[37m" + "Powered by: TonyTin, https://github.com/roygbip/yuyuko"
+      );
+      this.term.writeln("");
       // 监听终端输入
       this.term.onData((data) => {
-        // console.log("key pressed in browser:", data);
+        console.log("key pressed in browser:", data);
         // this.term.write(data);
         this.socket.emit("ptyinput", { input: data });
       });
+      // ctrl + d
+      // this.term.attachCustomKeyEventHandler((e) => {
+      //   if (e.ctrlKey && e.key === "d") {
+      //     this.socket.emit("disconnect_request");
+      //     return false;
+      //   }
+      //   return true;
+      // });
     },
     // 终端大小调整
     fitToscreen() {

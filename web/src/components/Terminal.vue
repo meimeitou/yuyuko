@@ -98,6 +98,8 @@ export default defineComponent({
       rows,
       cols,
       connectColor: ref("green"),
+      connectExceed: ref(0),
+      maxKeepAlive: ref(1000 * 300), // 最大保持连接时间5分钟
     };
   },
   created() {
@@ -130,6 +132,7 @@ export default defineComponent({
       });
       this.status = "connected";
       this.connectColor = "green";
+      this.timeoutExec(this.maxKeepAlive);
     });
     // 绑定socket方法
     // 后端输出到终端
@@ -161,9 +164,10 @@ export default defineComponent({
       this.term.writeln("");
       // 监听终端输入
       this.term.onData((data) => {
-        console.log("key pressed in browser:", data);
+        // console.log("key pressed in browser:", data);
         // this.term.write(data);
         this.socket.emit("ptyinput", { input: data });
+        this.timeoutExec(this.maxKeepAlive);
       });
       // ctrl + d
       // this.term.attachCustomKeyEventHandler((e) => {
@@ -174,12 +178,25 @@ export default defineComponent({
       //   return true;
       // });
     },
+    startMaxKeepAlive() {
+      let timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        this.fitToscreen();
+      }, 100);
+    },
     // 终端大小调整
     fitToscreen() {
       this.fit.fit();
       const dims = { cols: this.term.cols, rows: this.term.rows };
       console.log("sending new dimensions to server's pty", dims);
       this.socket.emit("resize", dims);
+    },
+    timeoutExec(wait_ms: number) {
+      clearTimeout(this.connectExceed);
+      this.connectExceed = setTimeout(() => {
+        this.socket.emit("disconnect_request");
+      }, wait_ms);
     },
     debounce() {
       let timeout;

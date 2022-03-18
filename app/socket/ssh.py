@@ -1,8 +1,6 @@
 import paramiko
 import time
 import struct
-import logging
-
 
 class SSHClient(object):
     def __init__(self, host, port, user, password, timeout=15) -> None:

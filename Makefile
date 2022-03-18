@@ -16,7 +16,7 @@ image:
 	@docker build -t hub.dns.360.cn/dns/yuyuko:latest .
 
 dev:          ## run flask
-	@DEBUG=true python yuyuko.py
+	@python yuyuko.py
 
 pro:
 	gunicorn -c gunicorn_config.py yuyuko:app --timeout 90 --log-level debug --worker-class gevent -w 1

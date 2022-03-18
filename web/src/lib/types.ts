@@ -39,6 +39,12 @@ interface SSHHost {
   comments: string;
 }
 
+interface SSHShortCut {
+  command: string;
+  description: string;
+  sudo: boolean;
+}
+
 export {
   Item,
   SSHTab,
@@ -46,4 +52,5 @@ export {
   SSHLocalHistoryOption,
   SSHUser,
   SSHHost,
+  SSHShortCut,
 };

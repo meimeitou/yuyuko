@@ -5,7 +5,6 @@ from threading import Lock
 from app.socket.ssh import SSHClient
 from app.socket.worker import clients, Worker
 import weakref
-import paramiko
 
 thread = None
 thread_lock = Lock()
@@ -15,10 +14,11 @@ async_mode = "gevent"
 BUF_SIZE = 32 * 1024
 MAX_WORKERS = 10
 
+
 def init_term(app):
     global socketio
-    socketio = SocketIO(app, cors_allowed_origins='*',ping_timeout=5, ping_interval=5,
-                        engineio_logger=False, async_mode=async_mode,async_handlers=True,
+    socketio = SocketIO(app, cors_allowed_origins='*', ping_timeout=5, ping_interval=5,
+                        engineio_logger=False, async_mode=async_mode, async_handlers=True,
                         path="socket/terminal.io")
     socketio.on_namespace(MyNamespace('/pty'))
 
@@ -28,6 +28,14 @@ def recvThread(worker=None):
     while True:
         socketio.sleep(0.01)
         if worker:
+            if worker.sshClient.chan.closed:
+                socketio.emit(
+                    "pty-output", {"output": "exit\r\n"},
+                    namespace="/pty",
+                    room=worker.sid)
+                socketio.emit("disconnect",namespace="/pty",
+                    room=worker.sid)
+                return
             while worker.sshClient.chan.recv_ready():
                 info = worker.sshClient.chan.recv(BUF_SIZE).decode('utf-8')
                 socketio.emit(
@@ -41,10 +49,12 @@ class MyNamespace(Namespace):
         if worker:
             worker().close()
     # 断开连接
+
     def on_disconnect_request(self):
         logging.info(f"on_disconnect_request request sid: {request.sid}")
         # global sshClient
-        socketio.emit("pty-output", {"output": "exit\r\n"}, namespace="/pty",room=request.sid)
+        socketio.emit("pty-output", {"output": "exit\r\n"},
+                      namespace="/pty", room=request.sid)
         disconnect()
         worker = self._get_worker()
         if worker:
@@ -58,13 +68,20 @@ class MyNamespace(Namespace):
         logging.info(f"on_ptyinput request sid: {request.sid}")
         if worker:
             # logging.info("received input from browser: %s" % repr(data["input"].encode()))
-            worker().sshClient.send(data["input"].encode())
-            if data["input"].encode() == b'\x04':
+            try:
+                worker().sshClient.send(data["input"].encode())
+            except OSError:
                 socketio.emit(
                     "pty-output", {"output": "exit\r\n"},
                     namespace="/pty", room=request.sid)
                 disconnect()
                 worker().close()
+                # if data["input"].encode() == b'\x04':
+                #     socketio.emit(
+                #         "pty-output", {"output": "exit\r\n"},
+                #         namespace="/pty", room=request.sid)
+                #     disconnect()
+                #     worker().close()
 
     # 终端调整大小
     def on_resize(self, data):
@@ -82,29 +99,29 @@ class MyNamespace(Namespace):
         if self._get_worker() is not None:
             logging.info("already connected...")
             return
-        
+
         if ip in clients:
-            if len(clients.get(ip))>=MAX_WORKERS:
+            if len(clients.get(ip)) >= MAX_WORKERS:
                 logging.info("client max connection reached...")
                 socketio.emit(
                     "pty-output", {"output": "client max connection reached..\r\n"},
-                    namespace="/pty",room=sid)
+                    namespace="/pty", room=sid)
                 disconnect()
                 return
         logging.info("new client connected")
         try:
-            
+
             sshClient = SSHClient(host=data["host"], port=data["port"],
-                                user=data["user"], password=data["password"])
+                                  user=data["user"], password=data["password"])
             sshClient.resize_window(data["cols"], data["rows"])
             worker = Worker(ip, sid, sshClient)
         except Exception as e:
             socketio.emit(
-                    "pty-output", {"output": "连接失败...\r\n"},
-                    namespace="/pty",room=sid)
+                "pty-output", {"output": "连接失败...\r\n"},
+                namespace="/pty", room=sid)
             socketio.emit(
-                    "pty-output", {"output": f"{e}\r\n"},
-                    namespace="/pty",room=sid)
+                "pty-output", {"output": f"{e}\r\n"},
+                namespace="/pty", room=sid)
             disconnect()
             return
         if ip in clients:
@@ -115,12 +132,15 @@ class MyNamespace(Namespace):
         global thread
         with thread_lock:
             if thread is None:
-                socketio.start_background_task(target=recvThread, worker=worker)
+                socketio.start_background_task(
+                    target=recvThread, worker=worker)
 
     # 连接
     def on_connect(self):
-        logging.info(f'client ip: {self._get_remote_ip()} sid: {request.sid}, connected...')
+        logging.info(
+            f'client ip: {self._get_remote_ip()} sid: {request.sid}, connected...')
     # create or old
+
     def _get_worker(self):
         ip = self._get_remote_ip()
         sid = request.sid

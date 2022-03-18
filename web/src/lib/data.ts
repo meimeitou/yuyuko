@@ -1,3 +1,4 @@
+import { SSHShortCut } from "@/lib/types";
 const menuList = [
   {
     icon: "inbox",
@@ -38,4 +39,17 @@ const menuList = [
   },
 ];
 
-export { menuList };
+const shortCutList = [
+  {
+    command: "sudo su",
+    description: "to root",
+    sudo: true,
+  },
+  {
+    command: "kubectl get node",
+    description: "show k8s node",
+    sudo: false,
+  },
+] as Array<SSHShortCut>;
+
+export { menuList, shortCutList };

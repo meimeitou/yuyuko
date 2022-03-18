@@ -1,8 +1,48 @@
 <template>
   <q-badge :color="connectColor"> 连接状态: {{ status }} </q-badge>
+  <q-btn round size="6px" color="info" icon="favorite" class="q-ml-sm">
+    <q-tooltip>short-cut command</q-tooltip>
+    <q-menu
+      transition-show="jump-right"
+      transition-hide="jump-left"
+      anchor="top right"
+      self="center left"
+      v-model="showShortCut"
+    >
+      <!-- <div class="row items-center no-wrap q-pa-md" style="padding: 5px">
+        <div class="column">
+          <div class="text-h6 q-mb-md">short-cut</div>
+        </div>
+      </div> -->
+      <div class="q-pa-md" style="max-width: 350px; padding: 0px">
+        <q-toolbar class="bg-info text-white shadow-2">
+          <q-toolbar-title>short-cut</q-toolbar-title>
+        </q-toolbar>
+        <q-list bordered separator class="rounded-borders">
+          <template v-for="item in shortCutList" :key="item.command">
+            <q-item clickable v-ripple @click="shortCutCommand(item)">
+              <q-item-section>
+                <q-item-label
+                  ><b>{{ item.command }}</b></q-item-label
+                >
+                <q-item-label caption>{{ item.description }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
+          <!-- <q-item clickable v-ripple>
+            <q-item-section>
+              <q-item-label overline>OVERLINE</q-item-label>
+              <q-item-label>Item with caption</q-item-label>
+            </q-item-section>
+          </q-item> -->
+        </q-list>
+      </div>
+    </q-menu>
+  </q-btn>
+  <!-- terminal -->
   <div
     style="width: 100%; height: calc(100% - 50px)"
-    id="terminal"
+    v-bind:id="terminalID"
     class="terminal"
   />
 </template>
@@ -16,10 +56,15 @@ import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import { SearchAddon } from "xterm-addon-search";
 import { WebLinksAddon } from "xterm-addon-web-links";
-
+import { shortCutList } from "@/lib/data";
+import { SSHShortCut } from "@/lib/types";
 export default defineComponent({
   Name: "Terminal",
   props: {
+    terminalID: {
+      type: String,
+      default: "terminal",
+    },
     host: {
       type: String,
       required: true,
@@ -100,6 +145,8 @@ export default defineComponent({
       connectColor: ref("green"),
       connectExceed: ref(0),
       maxKeepAlive: ref(1000 * 300), // 最大保持连接时间5分钟
+      shortCutList,
+      showShortCut: ref(false),
     };
   },
   created() {
@@ -151,7 +198,7 @@ export default defineComponent({
   },
   methods: {
     initTerminal() {
-      const modalRoot = document.getElementById("terminal") as HTMLElement;
+      const modalRoot = document.getElementById(this.terminalID) as HTMLElement;
       this.term.open(modalRoot);
       // this.fit.fit();
       this.term.resize(this.cols, this.rows);
@@ -177,6 +224,17 @@ export default defineComponent({
       //   }
       //   return true;
       // });
+    },
+    shortCutCommand(item: SSHShortCut) {
+      console.log(item);
+      this.showShortCut = false;
+      // this.term.write(`${item.command}\r\n`);
+      this.socket.emit("ptyinput", { input: `${item.command}\n` });
+      if (item.sudo) {
+        setTimeout(() => {
+          this.socket.emit("ptyinput", { input: `${this.password}\n` });
+        }, 500);
+      }
     },
     startMaxKeepAlive() {
       let timeout;

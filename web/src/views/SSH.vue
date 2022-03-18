@@ -143,6 +143,7 @@
             <template v-for="item in connectTabs" :key="item">
               <q-tab-panel :name="item.name" style="padding: 0px 0px">
                 <Terminal
+                  :terminalID="item.id"
                   :host="item.host"
                   :port="item.port"
                   :user="item.user"

@@ -144,7 +144,7 @@ export default defineComponent({
       cols,
       connectColor: ref("green"),
       connectExceed: ref(0),
-      maxKeepAlive: ref(1000 * 300), // 最大保持连接时间5分钟
+      maxKeepAlive: ref(1000 * 1200), // 最大保持连接时间20分钟
       shortCutList,
       showShortCut: ref(false),
     };
@@ -186,6 +186,7 @@ export default defineComponent({
     this.socket.on("pty-output", (data) => {
       // console.log("new output received from server:", data.output);
       this.term.write(data.output);
+      this.timeoutExec(this.maxKeepAlive);
     });
     // 断开连接
     this.socket.on("disconnect", () => {
@@ -226,10 +227,10 @@ export default defineComponent({
       // });
     },
     shortCutCommand(item: SSHShortCut) {
-      console.log(item);
       this.showShortCut = false;
-      // this.term.write(`${item.command}\r\n`);
-      this.socket.emit("ptyinput", { input: `${item.command}\n` });
+      if (item.command !== "") {
+        this.socket.emit("ptyinput", { input: `${item.command}\n` });
+      }
       if (item.sudo) {
         setTimeout(() => {
           this.socket.emit("ptyinput", { input: `${this.password}\n` });

@@ -46,8 +46,18 @@ const shortCutList = [
     sudo: true,
   },
   {
+    command: "",
+    description: "paste user password",
+    sudo: true,
+  },
+  {
     command: "kubectl get node",
     description: "show k8s node",
+    sudo: false,
+  },
+  {
+    command: "tmux new -s tmp",
+    description: "tmux terminal",
     sudo: false,
   },
 ] as Array<SSHShortCut>;

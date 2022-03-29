@@ -104,7 +104,7 @@
         <q-separator style="height: 0px"></q-separator>
         <img
           alt="logo"
-          src="../assets/magic.gif"
+          src="../assets/terminal.png"
           style="height: 300px; margin-top: 10px"
         />
       </div>
